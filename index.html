@@ -1,1 +1,2177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mago das Sombras</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #07050f;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #e2e8f0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        h1 {
+            font-size: 1.85rem;
+            margin-bottom: 6px;
+            background: linear-gradient(90deg, #c084fc, #a855f7, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 16px rgba(168, 85, 247, 0.5));
+        }
+
+        #ui {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        #ui span {
+            background: #130f24;
+            padding: 6px 14px;
+            border-radius: 10px;
+            border: 1px solid #2e1065;
+        }
+
+        #ui .vidas {
+            border-color: #ef4444;
+            color: #fca5a5;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+        }
+
+        #ui .pocoes {
+            border-color: #22d3ee;
+            color: #67e8f9;
+            box-shadow: 0 0 10px rgba(34, 211, 238, 0.2);
+        }
+
+        #ui .fase {
+            border-color: #a855f7;
+            color: #d8b4fe;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.25);
+        }
+
+        #ui .pts {
+            border-color: #f59e0b;
+            color: #fcd34d;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+        }
+
+        canvas {
+            border: 3px solid #6d28d9;
+            border-radius: 14px;
+            box-shadow: 0 0 60px rgba(109, 40, 217, 0.4);
+            background: #0a0614;
+            max-width: 100%;
+        }
+
+        #msg {
+            margin-top: 8px;
+            min-height: 26px;
+            font-size: 1.05rem;
+            color: #c4b5fd;
+            text-align: center;
+            text-shadow: 0 0 12px rgba(196, 181, 253, 0.55);
+        }
+
+        #controles {
+            margin-top: 6px;
+            font-size: 0.82rem;
+            color: #94a3b8;
+            text-align: center;
+        }
+
+        .btn {
+            margin-top: 14px;
+            padding: 12px 36px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6d28d9, #a855f7);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 24px rgba(109, 40, 217, 0.45);
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 30px rgba(168, 85, 247, 0.55);
+        }
+
+        #tela-inicio,
+        #tela-fim,
+        #tela-pause {
+            position: absolute;
+            inset: 0;
+            background: rgba(7, 5, 15, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            text-align: center;
+            padding: 24px;
+        }
+
+        #tela-fim,
+        #tela-pause {
+            display: none;
+        }
+
+        #tela-inicio h1,
+        #tela-fim h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            -webkit-text-fill-color: unset;
+            background: none;
+            color: #e9d5ff;
+            filter: none;
+        }
+
+        #tela-inicio p,
+        #tela-fim p {
+            color: #a1a1aa;
+            max-width: 500px;
+            line-height: 1.65;
+            margin-bottom: 14px;
+        }
+
+        .ctrl-info {
+            background: #130f24;
+            padding: 14px 24px;
+            border-radius: 12px;
+            border: 1px solid #3b0764;
+            margin: 12px 0;
+            font-size: 0.95rem;
+            color: #c4b5fd;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="tela-inicio">
+        <h1>🔮 Mago das Sombras</h1>
+        <p>
+            Em um reino amaldiçoado, você é o último mago.<br>
+            Colete <b>poções de mana</b>, derrote <b>monstros e magos das trevas</b> e alcance o portal mágico de cada
+            fase.<br>Pule na cabeça dos inimigos para eliminá-los — inclusive os <b>magos hostis</b>!
+        </p>
+        <div class="ctrl-info">
+            <b>← →</b> / <b>A D</b> — Mover &nbsp;·&nbsp;
+            <b>Espaço / W / ↑</b> — Pular<br>
+            <b>R</b> — Reiniciar fase &nbsp;·&nbsp; <b>P</b> — Pausar
+        </div>
+        <button class="btn" onclick="iniciar()">Começar a Jornada</button>
+    </div>
+
+    <div id="tela-fim">
+        <h1 id="titulo-fim">Vitória!</h1>
+        <p id="texto-fim"></p>
+        <button class="btn" onclick="reiniciarTudo()">Jogar de Novo</button>
+    </div>
+
+    <div id="tela-pause">
+        <h1 style="color:#e9d5ff;font-size:2rem;">⏸ Pausado</h1>
+        <p style="color:#a1a1aa;">Pressione P para continuar</p>
+    </div>
+
+    <h1>🔮 Mago das Sombras</h1>
+    <div id="ui">
+        <span class="fase">Fase <b id="fase">1</b>/<b id="totalFases">18</b></span>
+        <span class="vidas">❤️ <b id="vidas">3</b></span>
+        <span class="pocoes">🧪 <b id="pocoes">0</b></span>
+        <span class="pts">⭐ <b id="pts">0</b></span>
+    </div>
+    <canvas id="c" width="960" height="540"></canvas>
+    <div id="msg"></div>
+    <div id="controles">← → / A D mover · Espaço / W pular · R reinicia · P pausa</div>
+
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        const W = 960, H = 540;
+
+        const teclas = {};
+        window.addEventListener('keydown', e => {
+            teclas[e.code] = true;
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
+            if (e.code === 'KeyR' && jogoAtivo) carregarFase(faseAtual);
+            if (e.code === 'KeyP' && jogoAtivo) togglePause();
+        });
+        window.addEventListener('keyup', e => teclas[e.code] = false);
+
+        let faseAtual = 0, jogoAtivo = false, pausado = false, avancandoFase = false;
+        let vidas = 3, pocoes = 0, pontos = 0, tempo = 0;
+        let particulas = [], magiaTiros = [], msgTimer = null, cameraX = 0;
+
+        const player = {
+            x: 60, y: 400, w: 28, h: 42,
+            vx: 0, vy: 0, noChao: false,
+            olhandoDir: true, anim: 0,
+            invencivel: 0, puloBuffer: 0
+        };
+
+        // ===== FASES DARK FANTASY =====
+        const fases = [
+            // 1 - Tutorial fácil
+            {
+                nome: "Bosque Amaldiçoado",
+                largura: 1400,
+                corFundo: ['#1a1030', '#0f0a1e', '#07050f'],
+                plataformas: [
+                    { x: 0, y: 500, w: 1400, h: 40 },
+                    { x: 220, y: 420, w: 140, h: 18 },
+                    { x: 420, y: 360, w: 140, h: 18 },
+                    { x: 620, y: 300, w: 140, h: 18 },
+                    { x: 820, y: 360, w: 140, h: 18 },
+                    { x: 1020, y: 280, w: 150, h: 18 },
+                    { x: 1220, y: 220, w: 160, h: 18 }
+                ],
+                espinhos: [],
+                inimigos: [
+                    { x: 480, y: 330, tipo: 'esqueleto', dir: 1, minX: 420, maxX: 560 }
+                ],
+                pocoes: [
+                    { x: 270, y: 380 }, { x: 470, y: 320 }, { x: 670, y: 260 }, { x: 870, y: 320 }, { x: 1080, y: 240 }, { x: 1280, y: 180 }
+                ],
+                portal: { x: 1320, y: 160, w: 36, h: 60 },
+                spawn: { x: 40, y: 440 }
+            },
+            // 2
+            {
+                nome: "Ruínas Sombrias",
+                largura: 1600,
+                corFundo: ['#1e1b4b', '#12102a', '#0a0818'],
+                plataformas: [
+                    { x: 0, y: 500, w: 400, h: 40 }, { x: 500, y: 500, w: 300, h: 40 }, { x: 900, y: 500, w: 700, h: 40 },
+                    { x: 180, y: 410, w: 130, h: 18 },
+                    { x: 360, y: 350, w: 130, h: 18 },
+                    { x: 540, y: 300, w: 130, h: 18 },
+                    { x: 740, y: 350, w: 130, h: 18 },
+                    { x: 940, y: 280, w: 140, h: 18 },
+                    { x: 1160, y: 230, w: 140, h: 18 },
+                    { x: 1380, y: 180, w: 180, h: 18 }
+                ],
+                espinhos: [
+                    { x: 420, y: 485, w: 60, h: 15 }, { x: 820, y: 485, w: 60, h: 15 }
+                ],
+                inimigos: [
+                    { x: 560, y: 470, tipo: 'esqueleto', dir: 1, minX: 510, maxX: 780 },
+                    { x: 1000, y: 250, tipo: 'espectro', dir: 1, minX: 940, maxX: 1080 }
+                ],
+                pocoes: [
+                    { x: 220, y: 370 }, { x: 400, y: 310 }, { x: 580, y: 260 }, { x: 780, y: 310 }, { x: 1000, y: 240 }, { x: 1220, y: 190 }, { x: 1450, y: 140 }
+                ],
+                portal: { x: 1500, y: 120, w: 36, h: 60 },
+                spawn: { x: 40, y: 440 }
+            },
+            // 3
+            {
+                nome: "Caverna de Ossos",
+                largura: 1700,
+                corFundo: ['#1c1917', '#0c0a09', '#050403'],
+                plataformas: [
+                    { x: 0, y: 500, w: 280, h: 40 }, { x: 360, y: 500, w: 220, h: 40 }, { x: 660, y: 500, w: 220, h: 40 }, { x: 960, y: 500, w: 740, h: 40 },
+                    { x: 120, y: 410, w: 120, h: 16 },
+                    { x: 280, y: 350, w: 120, h: 16 },
+                    { x: 460, y: 300, w: 120, h: 16 },
+                    { x: 640, y: 350, w: 120, h: 16 },
+                    { x: 840, y: 280, w: 120, h: 16 },
+                    { x: 1040, y: 240, w: 130, h: 16 },
+                    { x: 1260, y: 200, w: 140, h: 16 },
+                    { x: 1480, y: 160, w: 180, h: 16 }
+                ],
+                espinhos: [
+                    { x: 290, y: 485, w: 55, h: 15 }, { x: 590, y: 485, w: 55, h: 15 }, { x: 890, y: 485, w: 55, h: 15 }
+                ],
+                inimigos: [
+                    { x: 420, y: 470, tipo: 'esqueleto', dir: 1, minX: 370, maxX: 560 },
+                    { x: 720, y: 320, tipo: 'esqueleto', dir: -1, minX: 660, maxX: 760 },
+                    { x: 1100, y: 210, tipo: 'espectro', dir: 1, minX: 1040, maxX: 1170 }
+                ],
+                pocoes: [
+                    { x: 160, y: 370 }, { x: 320, y: 310 }, { x: 500, y: 260 }, { x: 680, y: 310 }, { x: 880, y: 240 }, { x: 1100, y: 200 }, { x: 1320, y: 160 }, { x: 1550, y: 120 }
+                ],
+                portal: { x: 1600, y: 100, w: 36, h: 60 },
+                spawn: { x: 30, y: 440 }
+            },
+            // 4 - introduz mago
+            {
+                nome: "Torre do Necromante",
+                largura: 1800,
+                corFundo: ['#2e1065', '#1a0a3e', '#0c0420'],
+                plataformas: [
+                    { x: 0, y: 500, w: 240, h: 40 }, { x: 320, y: 500, w: 180, h: 40 }, { x: 580, y: 500, w: 180, h: 40 },
+                    { x: 840, y: 500, w: 180, h: 40 }, { x: 1100, y: 500, w: 700, h: 40 },
+                    { x: 100, y: 410, w: 110, h: 16 },
+                    { x: 250, y: 350, w: 110, h: 16 },
+                    { x: 420, y: 290, w: 110, h: 16 },
+                    { x: 600, y: 340, w: 110, h: 16 },
+                    { x: 780, y: 270, w: 120, h: 16 },
+                    { x: 980, y: 230, w: 120, h: 16 },
+                    { x: 1200, y: 280, w: 120, h: 16 },
+                    { x: 1420, y: 200, w: 140, h: 16 },
+                    { x: 1620, y: 150, w: 160, h: 16 }
+                ],
+                espinhos: [
+                    { x: 250, y: 485, w: 55, h: 15 }, { x: 510, y: 485, w: 55, h: 15 }, { x: 770, y: 485, w: 55, h: 15 }, { x: 1030, y: 485, w: 55, h: 15 }
+                ],
+                inimigos: [
+                    { x: 380, y: 470, tipo: 'esqueleto', dir: 1, minX: 330, maxX: 480 },
+                    { x: 650, y: 310, tipo: 'espectro', dir: 1, minX: 600, maxX: 710 },
+                    { x: 1050, y: 200, tipo: 'mago', dir: -1, minX: 980, maxX: 1100 },
+                    { x: 1480, y: 170, tipo: 'esqueleto', dir: 1, minX: 1420, maxX: 1560 }
+                ],
+                pocoes: [
+                    { x: 140, y: 370 }, { x: 290, y: 310 }, { x: 460, y: 250 }, { x: 640, y: 300 }, { x: 820, y: 230 }, { x: 1030, y: 190 }, { x: 1250, y: 240 }, { x: 1480, y: 160 }, { x: 1680, y: 110 }
+                ],
+                portal: { x: 1720, y: 90, w: 36, h: 60 },
+                spawn: { x: 30, y: 440 }
+            },
+            // 5
+            {
+                nome: "Pântano das Almas",
+                largura: 1900,
+                corFundo: ['#14532d', '#052e16', '#022c22'],
+                plataformas: [
+                    { x: 0, y: 500, w: 220, h: 40 }, { x: 300, y: 500, w: 160, h: 40 }, { x: 540, y: 500, w: 160, h: 40 },
+                    { x: 780, y: 500, w: 160, h: 40 }, { x: 1020, y: 500, w: 160, h: 40 }, { x: 1260, y: 500, w: 640, h: 40 },
+                    { x: 90, y: 410, w: 100, h: 16 },
+                    { x: 230, y: 350, w: 100, h: 16 },
+                    { x: 400, y: 290, w: 110, h: 16 },
+                    { x: 580, y: 340, w: 110, h: 16 },
+                    { x: 780, y: 270, w: 110, h: 16 },
+                    { x: 980, y: 320, w: 110, h: 16 },
+                    { x: 1180, y: 240, w: 120, h: 16 },
+                    { x: 1400, y: 190, w: 130, h: 16 },
+                    { x: 1640, y: 150, w: 200, h: 16 }
+                ],
+                espinhos: [
+                    { x: 230, y: 485, w: 55, h: 15 }, { x: 470, y: 485, w: 55, h: 15 }, { x: 710, y: 485, w: 55, h: 15 },
+                    { x: 950, y: 485, w: 55, h: 15 }, { x: 1190, y: 485, w: 55, h: 15 }
+                ],
+                inimigos: [
+                    { x: 360, y: 470, tipo: 'esqueleto', dir: 1, minX: 310, maxX: 440 },
+                    { x: 620, y: 310, tipo: 'demonio', dir: 1, minX: 580, maxX: 690 },
+                    { x: 1040, y: 290, tipo: 'espectro', dir: -1, minX: 980, maxX: 1090 },
+                    { x: 1460, y: 160, tipo: 'mago', dir: 1, minX: 1400, maxX: 1530 }
+                ],
+                pocoes: [
+                    { x: 120, y: 370 }, { x: 270, y: 310 }, { x: 440, y: 250 }, { x: 620, y: 300 }, { x: 820, y: 230 }, { x: 1020, y: 280 }, { x: 1230, y: 200 }, { x: 1450, y: 150 }, { x: 1700, y: 110 }
+                ],
+                portal: { x: 1780, y: 90, w: 36, h: 60 },
+                spawn: { x: 30, y: 440 }
+            },
+            // 6
+            {
+                nome: "Catedral Macabra",
+                largura: 2000,
+                corFundo: ['#3b0764', '#1e0538', '#0c0220'],
+                plataformas: [
+                    { x: 0, y: 500, w: 200, h: 40 }, { x: 280, y: 500, w: 150, h: 40 }, { x: 510, y: 500, w: 150, h: 40 },
+                    { x: 740, y: 500, w: 150, h: 40 }, { x: 970, y: 500, w: 150, h: 40 }, { x: 1200, y: 500, w: 800, h: 40 },
+                    { x: 70, y: 410, w: 95, h: 15 },
+                    { x: 200, y: 350, w: 100, h: 15 },
+                    { x: 360, y: 290, w: 100, h: 15 },
+                    { x: 530, y: 340, w: 100, h: 15 },
+                    { x: 720, y: 260, w: 105, h: 15 },
+                    { x: 920, y: 310, w: 105, h: 15 },
+                    { x: 1120, y: 230, w: 110, h: 15 },
+                    { x: 1340, y: 280, w: 110, h: 15 },
+                    { x: 1560, y: 200, w: 120, h: 15 },
+                    { x: 1780, y: 150, w: 180, h: 15 }
+                ],
+                espinhos: [
+                    { x: 210, y: 485, w: 55, h: 15 }, { x: 440, y: 485, w: 55, h: 15 }, { x: 670, y: 485, w: 55, h: 15 },
+                    { x: 900, y: 485, w: 55, h: 15 }, { x: 1130, y: 485, w: 55, h: 15 }
+                ],
+                inimigos: [
+                    { x: 340, y: 470, tipo: 'esqueleto', dir: 1, minX: 290, maxX: 440 },
+                    { x: 580, y: 310, tipo: 'demonio', dir: 1, minX: 530, maxX: 630 },
+                    { x: 980, y: 280, tipo: 'espectro', dir: -1, minX: 920, maxX: 1025 },
+                    { x: 1400, y: 250, tipo: 'mago', dir: 1, minX: 1340, maxX: 1450 },
+                    { x: 1840, y: 120, tipo: 'demonio', dir: 1, minX: 1780, maxX: 1960 }
+                ],
+                pocoes: [
+                    { x: 100, y: 370 }, { x: 240, y: 310 }, { x: 400, y: 250 }, { x: 570, y: 300 }, { x: 760, y: 220 },
+                    { x: 960, y: 270 }, { x: 1160, y: 190 }, { x: 1380, y: 240 }, { x: 1600, y: 160 }, { x: 1850, y: 110 }
+                ],
+                portal: { x: 1900, y: 90, w: 36, h: 60 },
+                spawn: { x: 25, y: 440 }
+            },
+            // 7
+            {
+                nome: "Abismo Infernal",
+                largura: 2100,
+                corFundo: ['#450a0a', '#1c0505', '#0a0202'],
+                plataformas: [
+                    { x: 0, y: 500, w: 180, h: 40 }, { x: 260, y: 500, w: 140, h: 40 }, { x: 480, y: 500, w: 140, h: 40 },
+                    { x: 700, y: 500, w: 140, h: 40 }, { x: 920, y: 500, w: 140, h: 40 }, { x: 1140, y: 500, w: 960, h: 40 },
+                    { x: 60, y: 400, w: 90, h: 14 },
+                    { x: 180, y: 340, w: 95, h: 14 },
+                    { x: 330, y: 280, w: 95, h: 14 },
+                    { x: 490, y: 330, w: 95, h: 14 },
+                    { x: 670, y: 250, w: 100, h: 14 },
+                    { x: 860, y: 300, w: 100, h: 14 },
+                    { x: 1060, y: 220, w: 105, h: 14 },
+                    { x: 1280, y: 270, w: 105, h: 14 },
+                    { x: 1500, y: 190, w: 115, h: 14 },
+                    { x: 1740, y: 240, w: 110, h: 14 },
+                    { x: 1940, y: 160, w: 140, h: 14 }
+                ],
+                espinhos: [
+                    { x: 190, y: 485, w: 55, h: 15 }, { x: 410, y: 485, w: 55, h: 15 }, { x: 630, y: 485, w: 55, h: 15 },
+                    { x: 850, y: 485, w: 55, h: 15 }, { x: 1070, y: 485, w: 55, h: 15 }
+                ],
+                inimigos: [
+                    { x: 320, y: 470, tipo: 'esqueleto', dir: 1, minX: 270, maxX: 400 },
+                    { x: 540, y: 300, tipo: 'demonio', dir: 1, minX: 490, maxX: 585 },
+                    { x: 920, y: 270, tipo: 'espectro', dir: -1, minX: 860, maxX: 960 },
+                    { x: 1340, y: 240, tipo: 'mago', dir: 1, minX: 1280, maxX: 1385 },
+                    { x: 1560, y: 160, tipo: 'demonio', dir: 1, minX: 1500, maxX: 1615 },
+                    { x: 1980, y: 130, tipo: 'mago', dir: 1, minX: 1940, maxX: 2080 }
+                ],
+                pocoes: [
+                    { x: 90, y: 360 }, { x: 220, y: 300 }, { x: 370, y: 240 }, { x: 530, y: 290 }, { x: 710, y: 210 },
+                    { x: 900, y: 260 }, { x: 1100, y: 180 }, { x: 1320, y: 230 }, { x: 1540, y: 150 }, { x: 1780, y: 200 }, { x: 1980, y: 120 }
+                ],
+                portal: { x: 2020, y: 100, w: 36, h: 60 },
+                spawn: { x: 25, y: 440 }
+            },
+            // 8
+            {
+                nome: "Fortaleza Maldita",
+                largura: 2200,
+                corFundo: ['#1e1b4b', '#0f0a2e', '#050318'],
+                plataformas: [
+                    { x: 0, y: 500, w: 160, h: 40 }, { x: 240, y: 500, w: 130, h: 40 }, { x: 450, y: 500, w: 130, h: 40 },
+                    { x: 660, y: 500, w: 130, h: 40 }, { x: 870, y: 500, w: 130, h: 40 }, { x: 1080, y: 500, w: 130, h: 40 },
+                    { x: 1290, y: 500, w: 910, h: 40 },
+                    { x: 50, y: 400, w: 85, h: 14 },
+                    { x: 170, y: 340, w: 90, h: 14 },
+                    { x: 310, y: 280, w: 90, h: 14 },
+                    { x: 470, y: 330, w: 90, h: 14 },
+                    { x: 650, y: 250, w: 95, h: 14 },
+                    { x: 840, y: 300, w: 95, h: 14 },
+                    { x: 1040, y: 220, w: 100, h: 14 },
+                    { x: 1250, y: 270, w: 100, h: 14 },
+                    { x: 1470, y: 190, w: 110, h: 14 },
+                    { x: 1700, y: 240, w: 105, h: 14 },
+                    { x: 1920, y: 160, w: 120, h: 14 },
+                    { x: 2100, y: 120, w: 90, h: 14 }
+                ],
+                espinhos: [
+                    { x: 170, y: 485, w: 55, h: 15 }, { x: 380, y: 485, w: 55, h: 15 }, { x: 590, y: 485, w: 55, h: 15 },
+                    { x: 800, y: 485, w: 55, h: 15 }, { x: 1010, y: 485, w: 55, h: 15 }, { x: 1220, y: 485, w: 55, h: 15 }
+                ],
+                inimigos: [
+                    { x: 300, y: 470, tipo: 'esqueleto', dir: 1, minX: 250, maxX: 360 },
+                    { x: 520, y: 300, tipo: 'demonio', dir: 1, minX: 470, maxX: 560 },
+                    { x: 900, y: 270, tipo: 'espectro', dir: -1, minX: 840, maxX: 935 },
+                    { x: 1300, y: 240, tipo: 'mago', dir: 1, minX: 1250, maxX: 1350 },
+                    { x: 1530, y: 160, tipo: 'demonio', dir: 1, minX: 1470, maxX: 1580 },
+                    { x: 1750, y: 210, tipo: 'mago', dir: -1, minX: 1700, maxX: 1805 },
+                    { x: 2140, y: 90, tipo: 'espectro', dir: 1, minX: 2100, maxX: 2190 }
+                ],
+                pocoes: [
+                    { x: 80, y: 360 }, { x: 210, y: 300 }, { x: 350, y: 240 }, { x: 510, y: 290 }, { x: 690, y: 210 },
+                    { x: 880, y: 260 }, { x: 1080, y: 180 }, { x: 1290, y: 230 }, { x: 1510, y: 150 }, { x: 1740, y: 200 }, { x: 1960, y: 120 }, { x: 2130, y: 80 }
+                ],
+                portal: { x: 2120, y: 60, w: 36, h: 60 },
+                spawn: { x: 20, y: 440 }
+            },
+            // 9
+            {
+                nome: "Trono do Lich",
+                largura: 2300,
+                corFundo: ['#4c0519', '#1f020a', '#0c0105'],
+                plataformas: [
+                    { x: 0, y: 500, w: 150, h: 40 }, { x: 230, y: 500, w: 120, h: 40 }, { x: 430, y: 500, w: 120, h: 40 },
+                    { x: 630, y: 500, w: 120, h: 40 }, { x: 830, y: 500, w: 120, h: 40 }, { x: 1030, y: 500, w: 120, h: 40 },
+                    { x: 1230, y: 500, w: 1070, h: 40 },
+                    { x: 40, y: 400, w: 80, h: 13 },
+                    { x: 160, y: 340, w: 85, h: 13 },
+                    { x: 300, y: 280, w: 85, h: 13 },
+                    { x: 450, y: 330, w: 85, h: 13 },
+                    { x: 620, y: 250, w: 90, h: 13 },
+                    { x: 810, y: 300, w: 90, h: 13 },
+                    { x: 1000, y: 220, w: 95, h: 13 },
+                    { x: 1200, y: 270, w: 95, h: 13 },
+                    { x: 1410, y: 190, w: 100, h: 13 },
+                    { x: 1630, y: 240, w: 100, h: 13 },
+                    { x: 1850, y: 170, w: 110, h: 13 },
+                    { x: 2080, y: 130, w: 180, h: 13 }
+                ],
+                espinhos: [
+                    { x: 160, y: 485, w: 55, h: 15 }, { x: 360, y: 485, w: 55, h: 15 }, { x: 560, y: 485, w: 55, h: 15 },
+                    { x: 760, y: 485, w: 55, h: 15 }, { x: 960, y: 485, w: 55, h: 15 }, { x: 1160, y: 485, w: 55, h: 15 }
+                ],
+                inimigos: [
+                    { x: 280, y: 470, tipo: 'esqueleto', dir: 1, minX: 240, maxX: 340 },
+                    { x: 500, y: 300, tipo: 'demonio', dir: 1, minX: 450, maxX: 535 },
+                    { x: 870, y: 270, tipo: 'espectro', dir: -1, minX: 810, maxX: 900 },
+                    { x: 1260, y: 240, tipo: 'mago', dir: 1, minX: 1200, maxX: 1295 },
+                    { x: 1470, y: 160, tipo: 'demonio', dir: 1, minX: 1410, maxX: 1510 },
+                    { x: 1690, y: 210, tipo: 'mago', dir: -1, minX: 1630, maxX: 1730 },
+                    { x: 1910, y: 140, tipo: 'espectro', dir: 1, minX: 1850, maxX: 1960 },
+                    { x: 2140, y: 100, tipo: 'mago', dir: 1, minX: 2080, maxX: 2260 }
+                ],
+                pocoes: [
+                    { x: 70, y: 360 }, { x: 200, y: 300 }, { x: 340, y: 240 }, { x: 490, y: 290 }, { x: 660, y: 210 },
+                    { x: 850, y: 260 }, { x: 1040, y: 180 }, { x: 1240, y: 230 }, { x: 1450, y: 150 }, { x: 1670, y: 200 },
+                    { x: 1890, y: 130 }, { x: 2140, y: 90 }
+                ],
+                portal: { x: 2200, y: 70, w: 36, h: 60 },
+                spawn: { x: 20, y: 440 }
+            },
+            // 10
+            {
+                nome: "Portal do Vazio",
+                largura: 2400,
+                corFundo: ['#0c0a1a', '#05030e', '#020108'],
+                plataformas: [
+                    { x: 0, y: 500, w: 140, h: 40 }, { x: 220, y: 500, w: 110, h: 40 }, { x: 410, y: 500, w: 110, h: 40 },
+                    { x: 600, y: 500, w: 110, h: 40 }, { x: 790, y: 500, w: 110, h: 40 }, { x: 980, y: 500, w: 110, h: 40 },
+                    { x: 1170, y: 500, w: 1230, h: 40 },
+                    { x: 35, y: 400, w: 75, h: 13 },
+                    { x: 150, y: 340, w: 80, h: 13 },
+                    { x: 280, y: 280, w: 80, h: 13 },
+                    { x: 430, y: 330, w: 80, h: 13 },
+                    { x: 590, y: 250, w: 85, h: 13 },
+                    { x: 780, y: 300, w: 85, h: 13 },
+                    { x: 970, y: 220, w: 90, h: 13 },
+                    { x: 1160, y: 270, w: 90, h: 13 },
+                    { x: 1360, y: 190, w: 95, h: 13 },
+                    { x: 1570, y: 240, w: 95, h: 13 },
+                    { x: 1780, y: 170, w: 100, h: 13 },
+                    { x: 2000, y: 220, w: 100, h: 13 },
+                    { x: 2200, y: 140, w: 180, h: 13 }
+                ],
+                espinhos: [
+                    { x: 150, y: 485, w: 55, h: 15 }, { x: 340, y: 485, w: 55, h: 15 }, { x: 530, y: 485, w: 55, h: 15 },
+                    { x: 720, y: 485, w: 55, h: 15 }, { x: 910, y: 485, w: 55, h: 15 }, { x: 1100, y: 485, w: 55, h: 15 }
+                ],
+                inimigos: [
+                    { x: 260, y: 470, tipo: 'esqueleto', dir: 1, minX: 230, maxX: 320 },
+                    { x: 480, y: 300, tipo: 'demonio', dir: 1, minX: 430, maxX: 510 },
+                    { x: 840, y: 270, tipo: 'espectro', dir: -1, minX: 780, maxX: 865 },
+                    { x: 1220, y: 240, tipo: 'mago', dir: 1, minX: 1160, maxX: 1250 },
+                    { x: 1420, y: 160, tipo: 'demonio', dir: 1, minX: 1360, maxX: 1455 },
+                    { x: 1630, y: 210, tipo: 'mago', dir: -1, minX: 1570, maxX: 1665 },
+                    { x: 1840, y: 140, tipo: 'espectro', dir: 1, minX: 1780, maxX: 1880 },
+                    { x: 2060, y: 190, tipo: 'mago', dir: 1, minX: 2000, maxX: 2100 },
+                    { x: 2260, y: 110, tipo: 'demonio', dir: 1, minX: 2200, maxX: 2380 }
+                ],
+                pocoes: [
+                    { x: 60, y: 360 }, { x: 190, y: 300 }, { x: 320, y: 240 }, { x: 470, y: 290 }, { x: 630, y: 210 },
+                    { x: 820, y: 260 }, { x: 1010, y: 180 }, { x: 1200, y: 230 }, { x: 1400, y: 150 }, { x: 1610, y: 200 },
+                    { x: 1820, y: 130 }, { x: 2040, y: 180 }, { x: 2260, y: 100 }
+                ],
+                portal: { x: 2300, y: 80, w: 36, h: 60 },
+                spawn: { x: 15, y: 440 }
+            },
+            // 11
+            {
+                nome: "Labirinto de Almas",
+                largura: 2500,
+                corFundo: ['#1a0533', '#0d0220', '#050110'],
+                plataformas: [
+                    { x: 0, y: 500, w: 130, h: 40 }, { x: 210, y: 500, w: 100, h: 40 }, { x: 390, y: 500, w: 100, h: 40 },
+                    { x: 570, y: 500, w: 100, h: 40 }, { x: 750, y: 500, w: 100, h: 40 }, { x: 930, y: 500, w: 100, h: 40 },
+                    { x: 1110, y: 500, w: 100, h: 40 }, { x: 1290, y: 500, w: 1210, h: 40 },
+                    { x: 30, y: 400, w: 70, h: 12 },
+                    { x: 140, y: 340, w: 75, h: 12 },
+                    { x: 270, y: 280, w: 75, h: 12 },
+                    { x: 410, y: 330, w: 75, h: 12 },
+                    { x: 560, y: 250, w: 80, h: 12 },
+                    { x: 740, y: 300, w: 80, h: 12 },
+                    { x: 930, y: 220, w: 85, h: 12 },
+                    { x: 1120, y: 270, w: 85, h: 12 },
+                    { x: 1320, y: 190, w: 90, h: 12 },
+                    { x: 1520, y: 240, w: 90, h: 12 },
+                    { x: 1720, y: 170, w: 95, h: 12 },
+                    { x: 1930, y: 220, w: 95, h: 12 },
+                    { x: 2140, y: 150, w: 100, h: 12 },
+                    { x: 2320, y: 110, w: 160, h: 12 }
+                ],
+                espinhos: [
+                    { x: 140, y: 485, w: 55, h: 15 }, { x: 320, y: 485, w: 55, h: 15 }, { x: 500, y: 485, w: 55, h: 15 },
+                    { x: 680, y: 485, w: 55, h: 15 }, { x: 860, y: 485, w: 55, h: 15 }, { x: 1040, y: 485, w: 55, h: 15 }, { x: 1220, y: 485, w: 55, h: 15 }
+                ],
+                inimigos: [
+                    { x: 250, y: 470, tipo: 'esqueleto', dir: 1, minX: 220, maxX: 300 },
+                    { x: 460, y: 300, tipo: 'demonio', dir: 1, minX: 410, maxX: 485 },
+                    { x: 800, y: 270, tipo: 'espectro', dir: -1, minX: 740, maxX: 820 },
+                    { x: 1180, y: 240, tipo: 'mago', dir: 1, minX: 1120, maxX: 1205 },
+                    { x: 1380, y: 160, tipo: 'demonio', dir: 1, minX: 1320, maxX: 1410 },
+                    { x: 1580, y: 210, tipo: 'mago', dir: -1, minX: 1520, maxX: 1610 },
+                    { x: 1780, y: 140, tipo: 'espectro', dir: 1, minX: 1720, maxX: 1815 },
+                    { x: 1990, y: 190, tipo: 'mago', dir: 1, minX: 1930, maxX: 2025 },
+                    { x: 2200, y: 120, tipo: 'demonio', dir: 1, minX: 2140, maxX: 2240 },
+                    { x: 2380, y: 80, tipo: 'mago', dir: 1, minX: 2320, maxX: 2480 }
+                ],
+                pocoes: [
+                    { x: 55, y: 360 }, { x: 180, y: 300 }, { x: 310, y: 240 }, { x: 450, y: 290 }, { x: 600, y: 210 },
+                    { x: 780, y: 260 }, { x: 970, y: 180 }, { x: 1160, y: 230 }, { x: 1360, y: 150 }, { x: 1560, y: 200 },
+                    { x: 1760, y: 130 }, { x: 1970, y: 180 }, { x: 2180, y: 110 }, { x: 2380, y: 70 }
+                ],
+                portal: { x: 2420, y: 50, w: 36, h: 60 },
+                spawn: { x: 15, y: 440 }
+            },
+            // 12 - final difícil
+            {
+                nome: "Trono do Vazio Eterno",
+                largura: 2600,
+                corFundo: ['#1a0533', '#0a0220', '#03010c'],
+                plataformas: [
+                    { x: 0, y: 500, w: 120, h: 40 }, { x: 200, y: 500, w: 95, h: 40 }, { x: 380, y: 500, w: 95, h: 40 },
+                    { x: 560, y: 500, w: 95, h: 40 }, { x: 740, y: 500, w: 95, h: 40 }, { x: 920, y: 500, w: 95, h: 40 },
+                    { x: 1100, y: 500, w: 95, h: 40 }, { x: 1280, y: 500, w: 1320, h: 40 },
+                    { x: 25, y: 400, w: 65, h: 12 },
+                    { x: 130, y: 340, w: 70, h: 12 },
+                    { x: 250, y: 280, w: 70, h: 12 },
+                    { x: 390, y: 330, w: 70, h: 12 },
+                    { x: 540, y: 250, w: 75, h: 12 },
+                    { x: 720, y: 300, w: 75, h: 12 },
+                    { x: 900, y: 220, w: 80, h: 12 },
+                    { x: 1090, y: 270, w: 80, h: 12 },
+                    { x: 1280, y: 190, w: 85, h: 12 },
+                    { x: 1480, y: 240, w: 85, h: 12 },
+                    { x: 1680, y: 170, w: 90, h: 12 },
+                    { x: 1890, y: 220, w: 90, h: 12 },
+                    { x: 2100, y: 150, w: 95, h: 12 },
+                    { x: 2300, y: 200, w: 95, h: 12 },
+                    { x: 2480, y: 120, w: 110, h: 12 }
+                ],
+                espinhos: [
+                    { x: 130, y: 485, w: 55, h: 15 }, { x: 310, y: 485, w: 55, h: 15 }, { x: 490, y: 485, w: 55, h: 15 },
+                    { x: 670, y: 485, w: 55, h: 15 }, { x: 850, y: 485, w: 55, h: 15 }, { x: 1030, y: 485, w: 55, h: 15 }, { x: 1210, y: 485, w: 55, h: 15 }
+                ],
+                inimigos: [
+                    { x: 240, y: 470, tipo: 'esqueleto', dir: 1, minX: 210, maxX: 290 },
+                    { x: 440, y: 300, tipo: 'demonio', dir: 1, minX: 390, maxX: 460 },
+                    { x: 780, y: 270, tipo: 'espectro', dir: -1, minX: 720, maxX: 795 },
+                    { x: 1150, y: 240, tipo: 'mago', dir: 1, minX: 1090, maxX: 1170 },
+                    { x: 1340, y: 160, tipo: 'demonio', dir: 1, minX: 1280, maxX: 1365 },
+                    { x: 1540, y: 210, tipo: 'mago', dir: -1, minX: 1480, maxX: 1565 },
+                    { x: 1740, y: 140, tipo: 'espectro', dir: 1, minX: 1680, maxX: 1770 },
+                    { x: 1950, y: 190, tipo: 'mago', dir: 1, minX: 1890, maxX: 1980 },
+                    { x: 2160, y: 120, tipo: 'demonio', dir: 1, minX: 2100, maxX: 2195 },
+                    { x: 2360, y: 170, tipo: 'mago', dir: -1, minX: 2300, maxX: 2395 },
+                    { x: 2520, y: 90, tipo: 'mago', dir: 1, minX: 2480, maxX: 2590 }
+                ],
+                pocoes: [
+                    { x: 50, y: 360 }, { x: 160, y: 300 }, { x: 290, y: 240 }, { x: 430, y: 290 }, { x: 580, y: 210 },
+                    { x: 760, y: 260 }, { x: 940, y: 180 }, { x: 1130, y: 230 }, { x: 1320, y: 150 }, { x: 1520, y: 200 },
+                    { x: 1720, y: 130 }, { x: 1930, y: 180 }, { x: 2140, y: 110 }, { x: 2340, y: 160 }, { x: 2520, y: 80 }
+                ],
+                portal: { x: 2520, y: 60, w: 36, h: 60 },
+                spawn: { x: 12, y: 440 }
+            }
+        ];
+
+        let plataformas = [], espinhos = [], inimigos = [], pocoesFase = [];
+        let portal = null, mapaLargura = 1600, corFundo = [];
+
+        function colide(a, b) {
+            return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+        }
+
+        function mostrarMsg(t) {
+            const el = document.getElementById('msg');
+            el.textContent = t;
+            clearTimeout(msgTimer);
+            msgTimer = setTimeout(() => el.textContent = '', 2500);
+        }
+
+        function spawnParticula(x, y, cor, qtd = 8) {
+            for (let i = 0; i < qtd; i++) {
+                particulas.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: (Math.random() - 0.5) * 5 - 1,
+                    vida: 25 + Math.random() * 20,
+                    cor, r: 2 + Math.random() * 3
+                });
+            }
+        }
+
+        function carregarFase(n) {
+            const f = fases[n];
+            plataformas = f.plataformas.map(p => ({ ...p }));
+            espinhos = f.espinhos.map(e => ({ ...e }));
+            inimigos = f.inimigos.map(i => ({
+                ...i,
+                w: i.tipo === 'mago' ? 32 : 28,
+                h: i.tipo === 'mago' ? 34 : 28,
+                anim: 0, vivo: true,
+                ataqueTimer: i.tipo === 'mago' ? 60 + Math.random() * 40 : 0,
+                atacando: 0,
+                preparando: 0
+            }));
+            magiaTiros = [];
+            pocoesFase = f.pocoes.map(m => ({ ...m, r: 11, coletada: false, anim: Math.random() * 10 }));
+            portal = { ...f.portal };
+            mapaLargura = f.largura;
+            corFundo = f.corFundo;
+            player.x = f.spawn.x;
+            player.y = f.spawn.y;
+            player.vx = 0; player.vy = 0;
+            player.invencivel = 60;
+            cameraX = 0;
+            particulas = [];
+            avancandoFase = false;
+            document.getElementById('fase').textContent = n + 1;
+            document.getElementById('totalFases').textContent = fases.length;
+            mostrarMsg('Fase ' + (n + 1) + ': ' + f.nome);
+        }
+
+        function atualizarUI() {
+            document.getElementById('vidas').textContent = vidas;
+            document.getElementById('pocoes').textContent = pocoes;
+            document.getElementById('pts').textContent = pontos;
+        }
+
+        function iniciar() {
+            document.getElementById('tela-inicio').style.display = 'none';
+            document.getElementById('tela-fim').style.display = 'none';
+            faseAtual = 0; vidas = 3; pocoes = 0; pontos = 0;
+            atualizarUI();
+            carregarFase(0);
+            jogoAtivo = true; pausado = false;
+            requestAnimationFrame(loop);
+        }
+
+        function reiniciarTudo() {
+            document.getElementById('tela-fim').style.display = 'none';
+            iniciar();
+        }
+
+        function togglePause() {
+            pausado = !pausado;
+            document.getElementById('tela-pause').style.display = pausado ? 'flex' : 'none';
+            if (!pausado) requestAnimationFrame(loop);
+        }
+
+        function matarPlayer() {
+            if (player.invencivel > 0) return;
+            vidas--;
+            atualizarUI();
+            spawnParticula(player.x + 14, player.y + 20, '#c084fc', 18);
+            if (vidas <= 0) {
+                fimDeJogo(false);
+            } else {
+                mostrarMsg('A magia falhou... você perdeu uma vida!');
+                carregarFase(faseAtual);
+            }
+        }
+
+        function atualizar() {
+            if (!jogoAtivo || pausado) return;
+            tempo++;
+
+            const vel = 6.8;
+            player.vx = 0;
+            if (teclas['ArrowLeft'] || teclas['KeyA']) { player.vx = -vel; player.olhandoDir = false; }
+            if (teclas['ArrowRight'] || teclas['KeyD']) { player.vx = vel; player.olhandoDir = true; }
+
+            if (teclas['Space'] || teclas['KeyW'] || teclas['ArrowUp']) {
+                if (player.noChao) {
+                    player.vy = -14.8;
+                    player.noChao = false;
+                    player.puloBuffer = 0;
+                } else {
+                    player.puloBuffer = 10;
+                }
+            }
+            if (player.puloBuffer > 0) {
+                player.puloBuffer--;
+                if (player.noChao) {
+                    player.vy = -14.8;
+                    player.noChao = false;
+                    player.puloBuffer = 0;
+                }
+            }
+
+            player.vy += 0.62;
+            if (player.vy > 16) player.vy = 16;
+            player.x += player.vx;
+            player.y += player.vy;
+            player.anim += Math.abs(player.vx) > 0.5 ? 0.25 : 0.08;
+            if (player.invencivel > 0) player.invencivel--;
+
+            player.noChao = false;
+            for (const p of plataformas) {
+                if (colide(player, p)) {
+                    if (player.vy > 0 && player.y + player.h - player.vy <= p.y + 6) {
+                        player.y = p.y - player.h;
+                        player.vy = 0;
+                        player.noChao = true;
+                    } else if (player.vy < 0 && player.y - player.vy >= p.y + p.h - 6) {
+                        player.y = p.y + p.h;
+                        player.vy = 0;
+                    } else if (player.vx > 0) {
+                        player.x = p.x - player.w;
+                    } else if (player.vx < 0) {
+                        player.x = p.x + p.w;
+                    }
+                }
+            }
+
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.w > mapaLargura) player.x = mapaLargura - player.w;
+            if (player.y > H + 80) matarPlayer();
+
+            cameraX = player.x - W * 0.4;
+            if (cameraX < 0) cameraX = 0;
+            if (cameraX > mapaLargura - W) cameraX = Math.max(0, mapaLargura - W);
+
+            for (const e of espinhos) {
+                if (colide(player, e)) matarPlayer();
+            }
+
+            for (const inim of inimigos) {
+                if (!inim.vivo) continue;
+                inim.anim += 0.15;
+                const spd = inim.tipo === 'mago' ? 1.4 : (inim.tipo === 'demonio' ? 2.6 : (inim.tipo === 'espectro' ? 2.2 : 1.7));
+                // Durante ataque o mago para de andar
+                if (!(inim.tipo === 'mago' && (inim.preparando > 0 || inim.atacando > 0))) {
+                    inim.x += inim.dir * spd;
+                    if (inim.x < inim.minX || inim.x > inim.maxX) inim.dir *= -1;
+                }
+                if (inim.tipo === 'espectro' || inim.tipo === 'demonio' || inim.tipo === 'mago') {
+                    inim.y += Math.sin(inim.anim * 0.9) * 0.9;
+                }
+
+                // ===== ATAQUE DO MAGO =====
+                if (inim.tipo === 'mago') {
+                    // Vira para o jogador quando está perto
+                    const distX = (player.x + player.w / 2) - (inim.x + inim.w / 2);
+                    const distY = (player.y + player.h / 2) - (inim.y + inim.h / 2);
+                    const dist = Math.hypot(distX, distY);
+
+                    if (inim.preparando > 0) {
+                        inim.preparando--;
+                        // Partículas de carga
+                        if (tempo % 3 === 0) {
+                            spawnParticula(inim.x + 24, inim.y + 6, '#f87171', 2);
+                        }
+                        if (inim.preparando === 0) {
+                            // Dispara o projétil
+                            inim.atacando = 18;
+                            const ang = Math.atan2(distY, distX);
+                            magiaTiros.push({
+                                x: inim.x + 20,
+                                y: inim.y + 8,
+                                vx: Math.cos(ang) * 5.5,
+                                vy: Math.sin(ang) * 5.5,
+                                r: 7,
+                                vida: 120
+                            });
+                            spawnParticula(inim.x + 24, inim.y + 6, '#ef4444', 10);
+                        }
+                    } else if (inim.atacando > 0) {
+                        inim.atacando--;
+                    } else {
+                        inim.ataqueTimer--;
+                        // Só ataca se o jogador estiver relativamente perto
+                        if (inim.ataqueTimer <= 0 && dist < 420) {
+                            inim.preparando = 28; // wind-up
+                            inim.ataqueTimer = 90 + Math.random() * 50;
+                            // Olha para o jogador
+                            if (distX < 0) inim.dir = -1;
+                            else inim.dir = 1;
+                        }
+                    }
+                }
+
+                if (colide(player, inim)) {
+                    if (player.vy > 0 && player.y + player.h - player.vy <= inim.y + 12) {
+                        inim.vivo = false;
+                        player.vy = -11;
+                        pontos += inim.tipo === 'mago' ? 250 : (inim.tipo === 'demonio' ? 150 : 100);
+                        spawnParticula(inim.x + 14, inim.y + 12, '#a855f7', 14);
+                        atualizarUI();
+                    } else {
+                        matarPlayer();
+                    }
+                }
+            }
+
+            // Projéteis mágicos dos magos
+            for (let i = magiaTiros.length - 1; i >= 0; i--) {
+                const tiro = magiaTiros[i];
+                tiro.x += tiro.vx;
+                tiro.y += tiro.vy;
+                tiro.vida--;
+                // Trail
+                if (tempo % 2 === 0) {
+                    particulas.push({
+                        x: tiro.x, y: tiro.y,
+                        vx: (Math.random() - 0.5) * 1.5,
+                        vy: (Math.random() - 0.5) * 1.5,
+                        vida: 12, cor: '#f87171', r: 2 + Math.random() * 2
+                    });
+                }
+                if (tiro.vida <= 0 || tiro.x < cameraX - 40 || tiro.x > cameraX + W + 40 || tiro.y < -40 || tiro.y > H + 40) {
+                    magiaTiros.splice(i, 1);
+                    continue;
+                }
+                // Colisão com jogador
+                const dx = (player.x + player.w / 2) - tiro.x;
+                const dy = (player.y + player.h / 2) - tiro.y;
+                if (dx * dx + dy * dy < (tiro.r + 12) * (tiro.r + 12)) {
+                    spawnParticula(tiro.x, tiro.y, '#ef4444', 12);
+                    magiaTiros.splice(i, 1);
+                    matarPlayer();
+                }
+            }
+
+            for (const m of pocoesFase) {
+                if (m.coletada) continue;
+                m.anim += 0.12;
+                const dx = (player.x + player.w / 2) - m.x;
+                const dy = (player.y + player.h / 2) - m.y;
+                if (dx * dx + dy * dy < 24 * 24) {
+                    m.coletada = true;
+                    pocoes++;
+                    pontos += 50;
+                    spawnParticula(m.x, m.y, '#22d3ee', 12);
+                    atualizarUI();
+                }
+            }
+
+            // Avança de fase ao tocar o portal OU chegar perto do final do mapa
+            if (!avancandoFase) {
+                const pertoDoPortal = portal && colide(player, {
+                    x: portal.x - 20, y: portal.y - 30, w: portal.w + 40, h: portal.h + 40
+                });
+                const chegouNoFim = player.x + player.w >= mapaLargura - 50;
+                if (pertoDoPortal || chegouNoFim) {
+                    avancandoFase = true;
+                    pontos += 500;
+                    atualizarUI();
+                    if (faseAtual < fases.length - 1) {
+                        const proxima = faseAtual + 1;
+                        mostrarMsg('✨ Fase ' + (faseAtual + 1) + ' completa! Indo para a ' + (proxima + 1) + '...');
+                        setTimeout(() => {
+                            faseAtual = proxima;
+                            carregarFase(faseAtual);
+                        }, 900);
+                    } else {
+                        mostrarMsg('✨ Todas as fases completas!');
+                        setTimeout(() => fimDeJogo(true), 900);
+                    }
+                }
+            }
+
+            for (let i = particulas.length - 1; i >= 0; i--) {
+                const p = particulas[i];
+                p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.vida--;
+                if (p.vida <= 0) particulas.splice(i, 1);
+            }
+        }
+
+        function fimDeJogo(vitoria) {
+            jogoAtivo = false;
+            document.getElementById('titulo-fim').textContent = vitoria ? '🏆 O Reino Foi Salvo!' : '💀 As Trevas Venceram';
+            document.getElementById('texto-fim').textContent = vitoria
+                ? `Você completou as ${fases.length} fases das trevas!\nPoções: ${pocoes} · Pontos: ${pontos}`
+                : `Pontos: ${pontos} · Poções: ${pocoes}\nTente novamente, mago...`;
+            document.getElementById('tela-fim').style.display = 'flex';
+        }
+
+        // ===== DESENHO DO MAGO =====
+        function desenharMago() {
+            if (player.invencivel > 0 && Math.floor(player.invencivel / 4) % 2 === 0) return;
+            const px = player.x - cameraX;
+            const py = player.y;
+            const dir = player.olhandoDir ? 1 : -1;
+            const pulando = !player.noChao;
+            const andando = Math.abs(player.vx) > 0.5 && player.noChao;
+
+            ctx.save();
+            ctx.translate(px + player.w / 2, py + player.h / 2);
+            ctx.scale(dir, 1);
+
+            // Sombra
+            ctx.fillStyle = 'rgba(0,0,0,0.35)';
+            ctx.beginPath();
+            ctx.ellipse(0, player.h / 2 + 3, 13, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Aura mágica neon INTENSA
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = '#e879f9';
+            ctx.shadowBlur = 18;
+            ctx.strokeStyle = 'rgba(240,171,252,0.8)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 24 + Math.sin(tempo * 0.1) * 3, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.shadowColor = '#22d3ee';
+            ctx.shadowBlur = 14;
+            ctx.strokeStyle = 'rgba(103,232,249,0.6)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 30 + Math.sin(tempo * 0.08) * 2, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.shadowColor = '#fbbf24';
+            ctx.shadowBlur = 10;
+            ctx.strokeStyle = 'rgba(253,224,71,0.35)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 34 + Math.sin(tempo * 0.06) * 2, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Capa vibrante
+            ctx.shadowColor = '#7c3aed';
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = '#7c3aed';
+            ctx.beginPath();
+            ctx.moveTo(-8, -18);
+            ctx.quadraticCurveTo(-18, -5, -14, 16);
+            ctx.lineTo(-4, 12);
+            ctx.lineTo(-6, -10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#a855f7';
+            ctx.beginPath();
+            ctx.moveTo(-7, -16);
+            ctx.quadraticCurveTo(-14, -4, -11, 10);
+            ctx.lineTo(-5, 8);
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Corpo (túnica) vibrante
+            const tunica = ctx.createLinearGradient(-12, -16, 12, 18);
+            tunica.addColorStop(0, '#a855f7');
+            tunica.addColorStop(0.5, '#7c3aed');
+            tunica.addColorStop(1, '#6d28d9');
+            ctx.fillStyle = tunica;
+            ctx.shadowColor = '#a855f7';
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.roundRect(-12, -16, 24, 32, 6);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#e879f9';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Cinto mágico
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(-11, 2, 22, 4);
+            ctx.fillStyle = '#a855f7';
+            ctx.beginPath();
+            ctx.arc(0, 4, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cabeça
+            ctx.fillStyle = '#fcd34d';
+            ctx.beginPath();
+            ctx.arc(0, -22, 11, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#b45309';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            // Chapéu de mago
+            ctx.fillStyle = '#1e1b4b';
+            ctx.beginPath();
+            ctx.moveTo(-14, -28);
+            ctx.lineTo(0, -48);
+            ctx.lineTo(14, -28);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#4c1d95';
+            ctx.beginPath();
+            ctx.ellipse(0, -28, 15, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Estrela no chapéu
+            ctx.shadowColor = '#fde047';
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.moveTo(0, -42);
+            ctx.lineTo(2, -37);
+            ctx.lineTo(7, -37);
+            ctx.lineTo(3, -34);
+            ctx.lineTo(5, -29);
+            ctx.lineTo(0, -32);
+            ctx.lineTo(-5, -29);
+            ctx.lineTo(-3, -34);
+            ctx.lineTo(-7, -37);
+            ctx.lineTo(-2, -37);
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Olhos brilhantes neon
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.ellipse(-4, -23, 3.3, 3.6, 0, 0, Math.PI * 2);
+            ctx.ellipse(4, -23, 3.3, 3.6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowColor = '#22d3ee';
+            ctx.shadowBlur = 6;
+            ctx.fillStyle = '#22d3ee';
+            ctx.beginPath();
+            ctx.arc(-3.5, -22.5, 1.8, 0, Math.PI * 2);
+            ctx.arc(4.5, -22.5, 1.8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Barba
+            ctx.fillStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.moveTo(-6, -14);
+            ctx.quadraticCurveTo(0, -6, 6, -14);
+            ctx.quadraticCurveTo(0, -10, -6, -14);
+            ctx.fill();
+
+            // Cajado mágico
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(14, -8);
+            ctx.lineTo(18, 22);
+            ctx.stroke();
+            // Orbe do cajado neon MÁXIMO
+            ctx.shadowColor = '#f0abfc';
+            ctx.shadowBlur = 24;
+            const orbe = ctx.createRadialGradient(16, -12, 1, 16, -12, 10);
+            orbe.addColorStop(0, '#ffffff');
+            orbe.addColorStop(0.25, '#fde047');
+            orbe.addColorStop(0.5, '#f0abfc');
+            orbe.addColorStop(0.75, '#22d3ee');
+            orbe.addColorStop(1, '#7c3aed');
+            ctx.fillStyle = orbe;
+            ctx.beginPath();
+            ctx.arc(16, -12, 9, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Braços
+            const bracoOff = andando ? Math.sin(player.anim * 2) * 5 : (pulando ? -6 : 0);
+            ctx.fillStyle = '#7c3aed';
+            ctx.beginPath();
+            ctx.ellipse(-13, -2 + bracoOff * 0.3, 4, 9, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(12, -4 - bracoOff * 0.2, 4, 8, 0.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Pernas
+            const pernaOff = andando ? Math.sin(player.anim * 2) * 6 : 0;
+            ctx.fillStyle = '#3b0764';
+            if (pulando) {
+                ctx.beginPath();
+                ctx.ellipse(-5, 16, 4.5, 7, -0.2, 0, Math.PI * 2);
+                ctx.ellipse(5, 16, 4.5, 7, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.ellipse(-5, 16 + pernaOff * 0.3, 4.5, 8, 0, 0, Math.PI * 2);
+                ctx.ellipse(5, 16 - pernaOff * 0.3, 4.5, 8, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Botas
+            ctx.fillStyle = '#1e1b4b';
+            ctx.beginPath();
+            ctx.ellipse(-5, 22 + (pulando ? 0 : pernaOff * 0.2), 5.5, 3.5, 0, 0, Math.PI * 2);
+            ctx.ellipse(5, 22 - (pulando ? 0 : pernaOff * 0.2), 5.5, 3.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+
+            // Partículas mágicas ao redor do mago
+            if (tempo % 8 === 0) {
+                particulas.push({
+                    x: player.x + 14 + (Math.random() - 0.5) * 20,
+                    y: player.y + 10 + (Math.random() - 0.5) * 20,
+                    vx: (Math.random() - 0.5) * 1,
+                    vy: -0.8 - Math.random(),
+                    vida: 20,
+                    cor: '#c084fc',
+                    r: 1.5 + Math.random()
+                });
+            }
+        }
+
+        function desenharInimigo(inim) {
+            if (!inim.vivo) return;
+            const px = inim.x - cameraX;
+            const py = inim.y;
+            const bounce = Math.sin(inim.anim * 2) * 2;
+
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath();
+            ctx.ellipse(px + 14, py + 28, 11, 3.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (inim.tipo === 'mago') {
+                // MAGO INIMIGO com animação de ataque
+                const preparando = inim.preparando > 0;
+                const atacando = inim.atacando > 0;
+                const pulse = preparando ? (1.2 + Math.sin(tempo * 0.5) * 0.5) : (0.7 + Math.sin(inim.anim) * 0.3);
+                const shake = preparando ? Math.sin(tempo * 1.2) * 1.5 : 0;
+                const bx = px + shake;
+                const by = py + bounce;
+
+                // Aura hostil (maior ao preparar)
+                ctx.shadowColor = preparando ? '#fbbf24' : '#ef4444';
+                ctx.shadowBlur = (preparando ? 22 : 14) * pulse;
+                ctx.fillStyle = preparando ? 'rgba(251,191,36,0.25)' : 'rgba(239,68,68,0.2)';
+                ctx.beginPath();
+                ctx.arc(bx + 14, by + 14, preparando ? 26 : 20, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Capa
+                ctx.fillStyle = preparando ? '#4c1d95' : '#3b0764';
+                ctx.beginPath();
+                ctx.moveTo(bx + 4, by + 8);
+                ctx.quadraticCurveTo(bx - 4, by + 18, bx + 2, by + 28);
+                ctx.lineTo(bx + 26, by + 28);
+                ctx.quadraticCurveTo(bx + 32, by + 18, bx + 24, by + 8);
+                ctx.fill();
+                // Corpo
+                ctx.fillStyle = '#6d28d9';
+                ctx.beginPath();
+                ctx.roundRect(bx + 5, by + 10, 18, 16, 3);
+                ctx.fill();
+                // Cabeça
+                ctx.fillStyle = '#fbbf24';
+                ctx.beginPath();
+                ctx.arc(bx + 14, by + 6, 7, 0, Math.PI * 2);
+                ctx.fill();
+                // Chapéu
+                ctx.fillStyle = '#1e1b4b';
+                ctx.beginPath();
+                ctx.moveTo(bx + 5, by + 3);
+                ctx.lineTo(bx + 14, by - 12);
+                ctx.lineTo(bx + 23, by + 3);
+                ctx.closePath();
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(bx + 14, by + 3, 10, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Olhos — mais intensos no ataque
+                ctx.fillStyle = preparando || atacando ? '#fef08a' : '#ef4444';
+                ctx.shadowColor = preparando ? '#fbbf24' : '#ef4444';
+                ctx.shadowBlur = preparando ? 10 : 6;
+                ctx.beginPath();
+                ctx.arc(bx + 11, by + 6, preparando ? 2.5 : 2, 0, Math.PI * 2);
+                ctx.arc(bx + 17, by + 6, preparando ? 2.5 : 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Braço + cajado (levanta ao preparar / atacar)
+                const staffUp = preparando || atacando;
+                const staffAngle = staffUp ? -0.9 : 0.3;
+                const staffBaseX = bx + 20;
+                const staffBaseY = by + 12;
+                const staffLen = 18;
+                const staffEndX = staffBaseX + Math.cos(staffAngle - Math.PI / 2) * staffLen;
+                const staffEndY = staffBaseY + Math.sin(staffAngle - Math.PI / 2) * staffLen;
+
+                // Braço
+                ctx.strokeStyle = '#fbbf24';
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(bx + 18, by + 14);
+                ctx.lineTo(staffBaseX, staffBaseY);
+                ctx.stroke();
+
+                // Cajado
+                ctx.strokeStyle = '#a16207';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.moveTo(staffBaseX, staffBaseY + 8);
+                ctx.lineTo(staffEndX, staffEndY);
+                ctx.stroke();
+
+                // Orbe do cajado
+                const orbePulse = preparando ? 6 + Math.sin(tempo * 0.6) * 3 : (atacando ? 8 : 4);
+                ctx.fillStyle = preparando ? '#fbbf24' : (atacando ? '#fef08a' : '#f87171');
+                ctx.shadowColor = preparando ? '#fbbf24' : '#ef4444';
+                ctx.shadowBlur = preparando ? 18 : 8;
+                ctx.beginPath();
+                ctx.arc(staffEndX, staffEndY, orbePulse, 0, Math.PI * 2);
+                ctx.fill();
+                // Anel de carga
+                if (preparando) {
+                    ctx.strokeStyle = 'rgba(251,191,36,0.7)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(staffEndX, staffEndY, orbePulse + 5 + Math.sin(tempo * 0.4) * 3, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                ctx.shadowBlur = 0;
+
+                // Flash no momento do disparo
+                if (atacando && inim.atacando > 12) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                    ctx.beginPath();
+                    ctx.arc(staffEndX, staffEndY, 16, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (inim.tipo === 'esqueleto') {
+                // Esqueleto
+                ctx.fillStyle = '#e2e8f0';
+                // Cabeça
+                ctx.beginPath();
+                ctx.arc(px + 14, py + 8 + bounce, 9, 0, Math.PI * 2);
+                ctx.fill();
+                // Olhos escuros
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.arc(px + 10, py + 7 + bounce, 2.5, 0, Math.PI * 2);
+                ctx.arc(px + 18, py + 7 + bounce, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+                // Brilho vermelho nos olhos
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath();
+                ctx.arc(px + 10, py + 7.5 + bounce, 1.2, 0, Math.PI * 2);
+                ctx.arc(px + 18, py + 7.5 + bounce, 1.2, 0, Math.PI * 2);
+                ctx.fill();
+                // Corpo
+                ctx.fillStyle = '#cbd5e1';
+                ctx.fillRect(px + 9, py + 16 + bounce, 10, 12);
+                // Costelas
+                ctx.strokeStyle = '#94a3b8';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(px + 9, py + 18 + i * 3 + bounce);
+                    ctx.lineTo(px + 19, py + 18 + i * 3 + bounce);
+                    ctx.stroke();
+                }
+                // Braços
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.moveTo(px + 9, py + 18 + bounce);
+                ctx.lineTo(px + 2, py + 24 + bounce);
+                ctx.moveTo(px + 19, py + 18 + bounce);
+                ctx.lineTo(px + 26, py + 24 + bounce);
+                ctx.stroke();
+            } else if (inim.tipo === 'espectro') {
+                // Espectro fantasma
+                const g = ctx.createRadialGradient(px + 14, py + 12, 2, px + 14, py + 14, 16);
+                g.addColorStop(0, 'rgba(196,181,253,0.9)');
+                g.addColorStop(0.6, 'rgba(139,92,246,0.7)');
+                g.addColorStop(1, 'rgba(91,33,182,0.3)');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.moveTo(px + 4, py + 8 + bounce);
+                ctx.quadraticCurveTo(px + 14, py - 4 + bounce, px + 24, py + 8 + bounce);
+                ctx.quadraticCurveTo(px + 28, py + 20 + bounce, px + 22, py + 28 + bounce);
+                ctx.quadraticCurveTo(px + 18, py + 22 + bounce, px + 14, py + 28 + bounce);
+                ctx.quadraticCurveTo(px + 10, py + 22 + bounce, px + 6, py + 28 + bounce);
+                ctx.quadraticCurveTo(px + 0, py + 20 + bounce, px + 4, py + 8 + bounce);
+                ctx.fill();
+                // Olhos
+                ctx.fillStyle = '#fef08a';
+                ctx.beginPath();
+                ctx.arc(px + 10, py + 12 + bounce, 3, 0, Math.PI * 2);
+                ctx.arc(px + 18, py + 12 + bounce, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(px + 10, py + 12.5 + bounce, 1.5, 0, Math.PI * 2);
+                ctx.arc(px + 18, py + 12.5 + bounce, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Demônio
+                ctx.fillStyle = '#7f1d1d';
+                // Corpo
+                ctx.beginPath();
+                ctx.ellipse(px + 14, py + 16 + bounce, 12, 13, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Cabeça
+                ctx.fillStyle = '#991b1b';
+                ctx.beginPath();
+                ctx.arc(px + 14, py + 6 + bounce, 10, 0, Math.PI * 2);
+                ctx.fill();
+                // Chifres
+                ctx.fillStyle = '#450a0a';
+                ctx.beginPath();
+                ctx.moveTo(px + 6, py + 2 + bounce);
+                ctx.lineTo(px + 2, py - 10 + bounce);
+                ctx.lineTo(px + 10, py + 0 + bounce);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(px + 22, py + 2 + bounce);
+                ctx.lineTo(px + 26, py - 10 + bounce);
+                ctx.lineTo(px + 18, py + 0 + bounce);
+                ctx.fill();
+                // Olhos flamejantes
+                ctx.fillStyle = '#fbbf24';
+                ctx.beginPath();
+                ctx.arc(px + 10, py + 5 + bounce, 3.5, 0, Math.PI * 2);
+                ctx.arc(px + 18, py + 5 + bounce, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath();
+                ctx.arc(px + 10, py + 5.5 + bounce, 1.8, 0, Math.PI * 2);
+                ctx.arc(px + 18, py + 5.5 + bounce, 1.8, 0, Math.PI * 2);
+                ctx.fill();
+                // Boca
+                ctx.fillStyle = '#450a0a';
+                ctx.beginPath();
+                ctx.ellipse(px + 14, py + 12 + bounce, 5, 3, 0, 0, Math.PI);
+                ctx.fill();
+                // Asas
+                ctx.fillStyle = 'rgba(127,29,29,0.7)';
+                ctx.beginPath();
+                ctx.moveTo(px + 4, py + 12 + bounce);
+                ctx.quadraticCurveTo(px - 10, py + 0 + bounce, px + 2, py + 20 + bounce);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(px + 24, py + 12 + bounce);
+                ctx.quadraticCurveTo(px + 38, py + 0 + bounce, px + 26, py + 20 + bounce);
+                ctx.fill();
+            }
+        }
+
+        function desenharCogumelo(x, y, tamanho, corChap) {
+            // Caule
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(x - tamanho * 0.15, y - tamanho * 0.5, tamanho * 0.3, tamanho * 0.55);
+            // Chapéu neon intenso
+            ctx.shadowColor = corChap;
+            ctx.shadowBlur = 28;
+            ctx.fillStyle = corChap;
+            ctx.beginPath();
+            ctx.ellipse(x, y - tamanho * 0.5, tamanho * 0.55, tamanho * 0.35, 0, Math.PI, 0);
+            ctx.fill();
+            // Segundo glow
+            ctx.shadowBlur = 14;
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.beginPath();
+            ctx.ellipse(x, y - tamanho * 0.55, tamanho * 0.3, tamanho * 0.15, 0, Math.PI, 0);
+            ctx.fill();
+            // Pontos brilhantes
+            ctx.shadowBlur = 6;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(x - tamanho * 0.2, y - tamanho * 0.55, tamanho * 0.1, 0, Math.PI * 2);
+            ctx.arc(x + tamanho * 0.15, y - tamanho * 0.6, tamanho * 0.12, 0, Math.PI * 2);
+            ctx.arc(x, y - tamanho * 0.45, tamanho * 0.08, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        function desenhar() {
+            // Fundo escuro com gradiente
+            const bg = ctx.createLinearGradient(0, 0, 0, H);
+            bg.addColorStop(0, corFundo[0]);
+            bg.addColorStop(0.55, corFundo[1]);
+            bg.addColorStop(1, corFundo[2]);
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
+
+            // === LUA NEON LARANJA HIPER-REALISTA ===
+            const luaX = W * 0.78 - cameraX * 0.05;
+            const luaY = 98;
+            const luaR = 62;
+
+            // Atmosfera / glow em camadas
+            for (const [a, rMul] of [[0.18, 2.8], [0.28, 2.1], [0.4, 1.5]]) {
+                const h = ctx.createRadialGradient(luaX, luaY, luaR * 0.5, luaX, luaY, luaR * rMul);
+                h.addColorStop(0, `rgba(253,186,116,${a})`);
+                h.addColorStop(0.6, `rgba(251,146,60,${a * 0.35})`);
+                h.addColorStop(1, 'transparent');
+                ctx.fillStyle = h;
+                ctx.beginPath();
+                ctx.arc(luaX, luaY, luaR * rMul, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(luaX, luaY, luaR, 0, Math.PI * 2);
+            ctx.clip();
+
+            // Base esférica com iluminação 3D (luz vinda do canto superior esquerdo)
+            const base = ctx.createRadialGradient(luaX - 20, luaY - 22, 4, luaX + 8, luaY + 10, luaR * 1.15);
+            base.addColorStop(0, '#fff7ed');
+            base.addColorStop(0.2, '#fed7aa');
+            base.addColorStop(0.45, '#fdba74');
+            base.addColorStop(0.7, '#f97316');
+            base.addColorStop(0.9, '#c2410c');
+            base.addColorStop(1, '#7c2d12');
+            ctx.fillStyle = base;
+            ctx.fillRect(luaX - luaR - 2, luaY - luaR - 2, luaR * 2 + 4, luaR * 2 + 4);
+
+            // Terminator (sombra suave do lado direito)
+            const term = ctx.createLinearGradient(luaX - 10, luaY, luaX + luaR, luaY);
+            term.addColorStop(0, 'transparent');
+            term.addColorStop(0.55, 'transparent');
+            term.addColorStop(1, 'rgba(67,20,7,0.45)');
+            ctx.fillStyle = term;
+            ctx.fillRect(luaX - luaR, luaY - luaR, luaR * 2, luaR * 2);
+
+            // Crateras realistas em camadas
+            const crateras = [
+                [-18, -16, 11, 0.5], [14, -24, 8, 0.4], [24, 10, 13, 0.55],
+                [-10, 20, 9, 0.45], [6, 4, 5, 0.35], [-30, 6, 7, 0.4],
+                [16, -6, 4, 0.3], [-14, -30, 6, 0.35], [4, 26, 7, 0.4],
+                [-24, 22, 5, 0.3], [30, -8, 6, 0.35], [-4, -2, 3.5, 0.25],
+                [20, 22, 5, 0.3], [-28, -12, 4, 0.3], [10, 14, 3, 0.25]
+            ];
+            for (const [cx, cy, r, depth] of crateras) {
+                const gx = luaX + cx, gy = luaY + cy;
+                // interior escuro
+                const cg = ctx.createRadialGradient(gx + r * 0.25, gy + r * 0.25, 0, gx, gy, r);
+                cg.addColorStop(0, `rgba(67,20,7,${0.15 + depth * 0.25})`);
+                cg.addColorStop(0.55, `rgba(124,45,18,${0.2 + depth * 0.2})`);
+                cg.addColorStop(1, 'rgba(154,52,18,0.05)');
+                ctx.fillStyle = cg;
+                ctx.beginPath();
+                ctx.arc(gx, gy, r, 0, Math.PI * 2);
+                ctx.fill();
+                // anel iluminado da borda (lado da luz)
+                ctx.strokeStyle = `rgba(255,237,213,${0.15 + depth * 0.2})`;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(gx - r * 0.15, gy - r * 0.15, r * 0.92, -2.2, 0.6);
+                ctx.stroke();
+                // sombra interna oposta
+                ctx.strokeStyle = `rgba(67,20,7,${0.2 + depth * 0.15})`;
+                ctx.beginPath();
+                ctx.arc(gx + r * 0.1, gy + r * 0.1, r * 0.85, 0.8, 3.8);
+                ctx.stroke();
+            }
+
+            // Micro-textura da superfície
+            for (let i = 0; i < 120; i++) {
+                const a = (i * 2.399) % (Math.PI * 2);
+                const d = ((i * 13) % 100) / 100 * luaR * 0.92;
+                const rx = luaX + Math.cos(a) * d;
+                const ry = luaY + Math.sin(a) * d;
+                ctx.fillStyle = i % 3 === 0 ? 'rgba(255,247,237,0.07)' : 'rgba(124,45,18,0.08)';
+                ctx.fillRect(rx, ry, 1.5 + (i % 2), 1.5 + (i % 2));
+            }
+
+            // ===== ROSTO HUMANO REALISTA =====
+            // Forma do rosto (sombra suave)
+            ctx.fillStyle = 'rgba(154,52,18,0.12)';
+            ctx.beginPath();
+            ctx.ellipse(luaX, luaY + 2, 30, 34, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Testa / sombra sobrancelha
+            ctx.fillStyle = 'rgba(124,45,18,0.2)';
+            ctx.beginPath();
+            ctx.ellipse(luaX, luaY - 18, 26, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Órbitas oculares profundas
+            for (const side of [-1, 1]) {
+                const ox = luaX + side * 15;
+                const oy = luaY - 7;
+                // cavidade
+                const orb = ctx.createRadialGradient(ox, oy, 1, ox, oy, 12);
+                orb.addColorStop(0, 'rgba(67,20,7,0.15)');
+                orb.addColorStop(1, 'rgba(67,20,7,0.4)');
+                ctx.fillStyle = orb;
+                ctx.beginPath();
+                ctx.ellipse(ox, oy, 10, 11, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // globo
+                const globe = ctx.createRadialGradient(ox - 2, oy - 3, 1, ox, oy, 8);
+                globe.addColorStop(0, '#fffbeb');
+                globe.addColorStop(0.6, '#fde68a');
+                globe.addColorStop(1, '#fbbf24');
+                ctx.fillStyle = globe;
+                ctx.beginPath();
+                ctx.ellipse(ox, oy, 7.2, 8.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // íris marrom-alaranjada
+                const iris = ctx.createRadialGradient(ox, oy + 0.5, 0.5, ox, oy, 4);
+                iris.addColorStop(0, '#d97706');
+                iris.addColorStop(0.6, '#9a3412');
+                iris.addColorStop(1, '#7c2d12');
+                ctx.fillStyle = iris;
+                ctx.beginPath();
+                ctx.arc(ox + 0.5, oy + 0.5, 3.6, 0, Math.PI * 2);
+                ctx.fill();
+                // pupila
+                ctx.fillStyle = '#1c0a00';
+                ctx.beginPath();
+                ctx.arc(ox + 0.5, oy + 0.5, 1.6, 0, Math.PI * 2);
+                ctx.fill();
+                // catchlight
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                ctx.beginPath();
+                ctx.arc(ox - 1.5, oy - 1.8, 1.4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.beginPath();
+                ctx.arc(ox + 1.5, oy + 1, 0.7, 0, Math.PI * 2);
+                ctx.fill();
+                // pálpebra superior
+                ctx.strokeStyle = 'rgba(67,20,7,0.55)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.ellipse(ox, oy - 1, 7.5, 8.5, 0, -3.4, -0.2);
+                ctx.stroke();
+            }
+
+            // Sobrancelhas densas
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 3.2;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(luaX - 26, luaY - 17);
+            ctx.quadraticCurveTo(luaX - 15, luaY - 24, luaX - 6, luaY - 16);
+            ctx.moveTo(luaX + 6, luaY - 16);
+            ctx.quadraticCurveTo(luaX + 15, luaY - 24, luaX + 26, luaY - 17);
+            ctx.stroke();
+            // pelos da sobrancelha
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(120,53,15,0.5)';
+            for (let i = 0; i < 6; i++) {
+                const lx = luaX - 24 + i * 3.2;
+                ctx.beginPath();
+                ctx.moveTo(lx, luaY - 19);
+                ctx.lineTo(lx + 1, luaY - 22);
+                ctx.stroke();
+                const rx = luaX + 8 + i * 3.2;
+                ctx.beginPath();
+                ctx.moveTo(rx, luaY - 19);
+                ctx.lineTo(rx + 1, luaY - 22);
+                ctx.stroke();
+            }
+
+            // Nariz com volume e sombra
+            ctx.fillStyle = 'rgba(194,65,12,0.35)';
+            ctx.beginPath();
+            ctx.moveTo(luaX, luaY - 4);
+            ctx.quadraticCurveTo(luaX - 7, luaY + 8, luaX - 5, luaY + 12);
+            ctx.lineTo(luaX + 5, luaY + 12);
+            ctx.quadraticCurveTo(luaX + 7, luaY + 8, luaX, luaY - 4);
+            ctx.fill();
+            // ponte do nariz iluminada
+            ctx.strokeStyle = 'rgba(255,237,213,0.35)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(luaX - 1, luaY - 2);
+            ctx.lineTo(luaX - 1, luaY + 6);
+            ctx.stroke();
+            // narinas
+            ctx.fillStyle = 'rgba(67,20,7,0.4)';
+            ctx.beginPath();
+            ctx.ellipse(luaX - 3, luaY + 11, 2, 1.5, -0.3, 0, Math.PI * 2);
+            ctx.ellipse(luaX + 3, luaY + 11, 2, 1.5, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Boca com lábios
+            // sombra ao redor
+            ctx.fillStyle = 'rgba(67,20,7,0.2)';
+            ctx.beginPath();
+            ctx.ellipse(luaX, luaY + 22, 15, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // lábio inferior
+            ctx.fillStyle = 'rgba(154,52,18,0.55)';
+            ctx.beginPath();
+            ctx.ellipse(luaX, luaY + 23, 12, 5, 0, 0, Math.PI);
+            ctx.fill();
+            // linha da boca
+            ctx.strokeStyle = '#7c2d12';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(luaX - 12, luaY + 20);
+            ctx.quadraticCurveTo(luaX, luaY + 18, luaX + 12, luaY + 20);
+            ctx.stroke();
+            // lábio superior (arco do cupido)
+            ctx.strokeStyle = 'rgba(124,45,18,0.6)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(luaX - 10, luaY + 20);
+            ctx.quadraticCurveTo(luaX - 4, luaY + 17, luaX, luaY + 19);
+            ctx.quadraticCurveTo(luaX + 4, luaY + 17, luaX + 10, luaY + 20);
+            ctx.stroke();
+
+            // Bochechas com blush
+            ctx.fillStyle = 'rgba(234,88,12,0.28)';
+            ctx.beginPath();
+            ctx.ellipse(luaX - 22, luaY + 8, 10, 7, -0.2, 0, Math.PI * 2);
+            ctx.ellipse(luaX + 22, luaY + 8, 10, 7, 0.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Queixo
+            ctx.fillStyle = 'rgba(255,237,213,0.1)';
+            ctx.beginPath();
+            ctx.ellipse(luaX, luaY + 30, 10, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+
+            // Borda luminosa da lua
+            ctx.strokeStyle = 'rgba(254,215,170,0.7)';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = '#fb923c';
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.arc(luaX, luaY, luaR, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // === COGUMELOS GIGANTES REALISTAS NO FUNDO ===
+            const cogumelosFundo = [
+                { x: 0.12, y: 0.55, s: 1.0, cor: '#e879f9' },
+                { x: 0.35, y: 0.62, s: 0.75, cor: '#22d3ee' },
+                { x: 0.58, y: 0.50, s: 1.15, cor: '#f472b6' },
+                { x: 0.82, y: 0.58, s: 0.9, cor: '#a855f7' },
+                { x: 0.25, y: 0.72, s: 0.55, cor: '#4ade80' },
+                { x: 0.70, y: 0.70, s: 0.6, cor: '#fde047' }
+            ];
+            for (const cg of cogumelosFundo) {
+                const cx = ((cg.x * W * 1.3 - cameraX * 0.15) % (W + 200));
+                const cy = cg.y * H;
+                const s = cg.s * 70;
+                ctx.globalAlpha = 0.55;
+
+                // Caule realista com volume
+                const cauleG = ctx.createLinearGradient(cx - s * 0.15, cy, cx + s * 0.15, cy);
+                cauleG.addColorStop(0, '#a8a29e');
+                cauleG.addColorStop(0.4, '#f5f5f4');
+                cauleG.addColorStop(0.7, '#d6d3d1');
+                cauleG.addColorStop(1, '#78716c');
+                ctx.fillStyle = cauleG;
+                ctx.beginPath();
+                ctx.moveTo(cx - s * 0.12, cy);
+                ctx.quadraticCurveTo(cx - s * 0.18, cy - s * 0.5, cx - s * 0.1, cy - s * 0.9);
+                ctx.lineTo(cx + s * 0.1, cy - s * 0.9);
+                ctx.quadraticCurveTo(cx + s * 0.18, cy - s * 0.5, cx + s * 0.12, cy);
+                ctx.closePath();
+                ctx.fill();
+                // Anéis do caule
+                ctx.strokeStyle = 'rgba(120,113,108,0.35)';
+                ctx.lineWidth = 1.5;
+                for (let i = 1; i <= 3; i++) {
+                    const ry = cy - s * 0.2 * i;
+                    ctx.beginPath();
+                    ctx.ellipse(cx, ry, s * (0.11 - i * 0.01), s * 0.03, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                // Chapéu — glow
+                ctx.shadowColor = cg.cor;
+                ctx.shadowBlur = 35;
+                const chapG = ctx.createRadialGradient(cx - s * 0.15, cy - s * 1.05, s * 0.1, cx, cy - s * 0.9, s * 0.7);
+                chapG.addColorStop(0, '#ffffff');
+                chapG.addColorStop(0.25, cg.cor);
+                chapG.addColorStop(0.7, cg.cor);
+                chapG.addColorStop(1, 'rgba(0,0,0,0.4)');
+                ctx.fillStyle = chapG;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy - s * 0.95, s * 0.65, s * 0.4, 0, Math.PI, 0, true);
+                ctx.fill();
+                // Parte debaixo do chapéu (lamelas)
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = 'rgba(255,255,255,0.25)';
+                ctx.beginPath();
+                ctx.ellipse(cx, cy - s * 0.92, s * 0.55, s * 0.12, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Lamelas
+                ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+                ctx.lineWidth = 1;
+                for (let a = -1; a <= 1; a += 0.15) {
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy - s * 0.92);
+                    ctx.lineTo(cx + a * s * 0.55, cy - s * 0.85);
+                    ctx.stroke();
+                }
+                // Pontos brilhantes no chapéu
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                ctx.shadowColor = '#fff';
+                ctx.shadowBlur = 8;
+                const dots = [[-0.25, -1.05, 0.08], [0.15, -1.12, 0.1], [0.05, -0.95, 0.06], [-0.1, -1.15, 0.07], [0.3, -1.0, 0.05]];
+                for (const [dx, dy, dr] of dots) {
+                    ctx.beginPath();
+                    ctx.arc(cx + dx * s, cy + dy * s, dr * s, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.shadowBlur = 0;
+            }
+            ctx.globalAlpha = 1;
+
+            // Estrelas / pixels brilhantes
+            for (let i = 0; i < 45; i++) {
+                const sx = ((i * 89 + 40) - cameraX * 0.12) % W;
+                const sy = (i * 47) % (H * 0.55);
+                const brilho = 0.5 + Math.sin(tempo * 0.06 + i) * 0.4;
+                ctx.globalAlpha = brilho;
+                ctx.fillStyle = i % 3 === 0 ? '#67e8f9' : (i % 3 === 1 ? '#f0abfc' : '#fde047');
+                const r = 1.5 + (i % 3);
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = 5;
+                ctx.fillRect(sx, sy, r, r);
+                ctx.shadowBlur = 0;
+            }
+            ctx.globalAlpha = 1;
+
+            // Scanline sutil
+            ctx.fillStyle = 'rgba(0,0,0,0.06)';
+            for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);
+
+            // Plataformas — chão vivo de cristal rúnico (único)
+            for (const p of plataformas) {
+                const px = p.x - cameraX;
+                if (px + p.w < 0 || px > W) continue;
+                const isChao = p.h >= 30;
+
+                // Sombra
+                ctx.fillStyle = 'rgba(0,0,0,0.55)';
+                ctx.fillRect(px + 4, p.y + 5, p.w, p.h);
+
+                if (isChao) {
+                    // CHÃO: cristal quebrado com veias de energia
+                    const g = ctx.createLinearGradient(px, p.y, px, p.y + p.h);
+                    g.addColorStop(0, '#2e1065');
+                    g.addColorStop(0.3, '#1a0533');
+                    g.addColorStop(0.7, '#0c0220');
+                    g.addColorStop(1, '#050110');
+                    ctx.fillStyle = g;
+                    ctx.fillRect(px, p.y, p.w, p.h);
+
+                    // Veias de energia que pulsam
+                    ctx.lineWidth = 1.5;
+                    for (let i = 0; i < p.w; i += 28) {
+                        const pulse = 0.4 + Math.sin(tempo * 0.07 + i * 0.1 + p.x) * 0.35;
+                        ctx.globalAlpha = pulse;
+                        ctx.strokeStyle = i % 56 < 28 ? '#e879f9' : '#22d3ee';
+                        ctx.shadowColor = ctx.strokeStyle;
+                        ctx.shadowBlur = 8;
+                        ctx.beginPath();
+                        const baseY = p.y + 6;
+                        ctx.moveTo(px + i, baseY);
+                        ctx.lineTo(px + i + 8, baseY + 10 + Math.sin(tempo * 0.05 + i) * 3);
+                        ctx.lineTo(px + i + 16, baseY + 4);
+                        ctx.lineTo(px + i + 24, baseY + 14);
+                        ctx.stroke();
+                    }
+                    ctx.shadowBlur = 0;
+                    ctx.globalAlpha = 1;
+
+                    // Cristais saindo do chão
+                    for (let i = 10; i < p.w - 10; i += 40) {
+                        const ch = 6 + (i % 3) * 3;
+                        const pulse = 0.6 + Math.sin(tempo * 0.1 + i) * 0.3;
+                        ctx.globalAlpha = pulse;
+                        ctx.fillStyle = i % 80 < 40 ? '#c084fc' : '#67e8f9';
+                        ctx.shadowColor = ctx.fillStyle;
+                        ctx.shadowBlur = 10;
+                        ctx.beginPath();
+                        ctx.moveTo(px + i, p.y);
+                        ctx.lineTo(px + i + 5, p.y - ch);
+                        ctx.lineTo(px + i + 10, p.y);
+                        ctx.fill();
+                    }
+                    ctx.shadowBlur = 0;
+                    ctx.globalAlpha = 1;
+
+                    // Borda superior cristalina
+                    ctx.shadowColor = '#e879f9';
+                    ctx.shadowBlur = 18;
+                    ctx.fillStyle = '#f0abfc';
+                    ctx.fillRect(px, p.y, p.w, 3);
+                    ctx.shadowBlur = 0;
+
+                    // Cogumelos no chão
+                    if (p.w > 100) {
+                        const coresCog = ['#f472b6', '#e879f9', '#22d3ee', '#4ade80', '#fde047'];
+                        const nCog = Math.min(4, Math.floor(p.w / 90));
+                        for (let c = 0; c < nCog; c++) {
+                            const cx = px + 30 + c * (p.w / nCog);
+                            if (cx > 0 && cx < W) {
+                                desenharCogumelo(cx, p.y, 16 + (c % 2) * 5, coresCog[(c + Math.floor(p.x / 40)) % 5]);
+                            }
+                        }
+                    }
+                } else {
+                    // PLATAFORMAS FLUTUANTES: pedra flutuante com anel mágico
+                    const g = ctx.createLinearGradient(px, p.y, px, p.y + p.h);
+                    g.addColorStop(0, '#4c1d95');
+                    g.addColorStop(0.5, '#2e1065');
+                    g.addColorStop(1, '#1a0533');
+                    ctx.fillStyle = g;
+                    ctx.fillRect(px, p.y, p.w, p.h);
+
+                    // Anel de energia em volta
+                    ctx.strokeStyle = 'rgba(34,211,238,0.5)';
+                    ctx.lineWidth = 1.5;
+                    ctx.shadowColor = '#22d3ee';
+                    ctx.shadowBlur = 10;
+                    ctx.strokeRect(px - 2, p.y - 2, p.w + 4, p.h + 4);
+                    ctx.shadowBlur = 0;
+
+                    // Topo neon
+                    ctx.shadowColor = '#22d3ee';
+                    ctx.shadowBlur = 14;
+                    ctx.fillStyle = '#67e8f9';
+                    ctx.fillRect(px, p.y, p.w, 3);
+                    ctx.shadowBlur = 0;
+
+                    // Runas no centro
+                    ctx.fillStyle = '#f0abfc';
+                    ctx.shadowColor = '#e879f9';
+                    ctx.shadowBlur = 6;
+                    ctx.font = 'bold 10px monospace';
+                    ctx.globalAlpha = 0.75 + Math.sin(tempo * 0.1 + p.x) * 0.25;
+                    for (let i = 10; i < p.w - 6; i += 26) {
+                        ctx.fillText('✦', px + i, p.y + p.h - 4);
+                    }
+                    ctx.globalAlpha = 1;
+                    ctx.shadowBlur = 0;
+
+                    // Pequenos cogumelos
+                    if (p.w > 90) {
+                        const coresCog = ['#f472b6', '#22d3ee', '#fde047'];
+                        desenharCogumelo(px + p.w * 0.25, p.y, 11, coresCog[Math.floor(p.x / 60) % 3]);
+                        if (p.w > 130) desenharCogumelo(px + p.w * 0.7, p.y, 13, coresCog[(Math.floor(p.x / 60) + 1) % 3]);
+                    }
+                }
+            }
+
+            // Espinhos com brilho vermelho neon
+            for (const e of espinhos) {
+                const px = e.x - cameraX;
+                if (px + e.w < 0 || px > W) continue;
+                ctx.shadowColor = '#f87171';
+                ctx.shadowBlur = 16;
+                for (let i = 0; i < e.w; i += 10) {
+                    ctx.fillStyle = '#fecaca';
+                    ctx.beginPath();
+                    ctx.moveTo(px + i, e.y + e.h);
+                    ctx.lineTo(px + i + 5, e.y);
+                    ctx.lineTo(px + i + 10, e.y + e.h);
+                    ctx.fill();
+                    ctx.fillStyle = '#f87171';
+                    ctx.beginPath();
+                    ctx.moveTo(px + i + 2, e.y + e.h);
+                    ctx.lineTo(px + i + 5, e.y + 4);
+                    ctx.lineTo(px + i + 8, e.y + e.h);
+                    ctx.fill();
+                }
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#7f1d1d';
+                ctx.fillRect(px, e.y + e.h - 3, e.w, 3);
+            }
+
+            // Poções com brilho neon forte
+            for (const m of pocoesFase) {
+                if (m.coletada) continue;
+                const px = m.x - cameraX;
+                if (px < -20 || px > W + 20) continue;
+                const bob = Math.sin(m.anim) * 4;
+
+                ctx.save();
+                ctx.translate(px, m.y + bob);
+
+                // Aura neon intensa
+                ctx.shadowColor = '#22d3ee';
+                ctx.shadowBlur = 30;
+                ctx.fillStyle = 'rgba(34,211,238,0.4)';
+                ctx.beginPath();
+                ctx.arc(0, 0, 18, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowColor = '#e879f9';
+                ctx.shadowBlur = 18;
+                ctx.fillStyle = 'rgba(232,121,249,0.25)';
+                ctx.beginPath();
+                ctx.arc(0, 0, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Frasco
+                ctx.fillStyle = '#a5f3fc';
+                ctx.beginPath();
+                ctx.moveTo(-6, -4);
+                ctx.lineTo(-7, 8);
+                ctx.quadraticCurveTo(0, 12, 7, 8);
+                ctx.lineTo(6, -4);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = '#a5f3fc';
+                ctx.fillRect(-3, -10, 6, 7);
+                ctx.fillStyle = '#fbbf24';
+                ctx.shadowColor = '#fbbf24';
+                ctx.shadowBlur = 8;
+                ctx.fillRect(-4, -13, 8, 4);
+
+                ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.ellipse(-2, 0, 2, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            // Portal neon intenso
+            if (portal) {
+                const bx = portal.x - cameraX;
+                if (bx > -50 && bx < W + 50) {
+                    ctx.fillStyle = '#1e1b4b';
+                    ctx.fillRect(bx, portal.y + portal.h - 8, portal.w, 8);
+
+                    const pulse = 1 + Math.sin(tempo * 0.1) * 0.12;
+                    ctx.save();
+                    ctx.translate(bx + portal.w / 2, portal.y + portal.h / 2);
+                    ctx.scale(pulse, pulse);
+
+                    // Glow neon múltiplo
+                    const coresGlow = [
+                        ['rgba(240,171,252,0.7)', 48],
+                        ['rgba(103,232,249,0.55)', 36],
+                        ['rgba(244,114,182,0.45)', 26],
+                        ['rgba(253,224,71,0.3)', 18]
+                    ];
+                    for (const [cor, r] of coresGlow) {
+                        const g = ctx.createRadialGradient(0, 0, 2, 0, 0, r);
+                        g.addColorStop(0, cor);
+                        g.addColorStop(1, 'transparent');
+                        ctx.fillStyle = g;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, r, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    // Portal interior brilhante
+                    const pg = ctx.createLinearGradient(0, -28, 0, 28);
+                    pg.addColorStop(0, '#f0abfc');
+                    pg.addColorStop(0.25, '#e879f9');
+                    pg.addColorStop(0.5, '#22d3ee');
+                    pg.addColorStop(0.75, '#a855f7');
+                    pg.addColorStop(1, '#7c3aed');
+                    ctx.fillStyle = pg;
+                    ctx.shadowColor = '#f0abfc';
+                    ctx.shadowBlur = 28;
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 15, 28, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    // Anéis neon girando
+                    ctx.strokeStyle = '#22d3ee';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 20, 32, tempo * 0.03, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.strokeStyle = '#e879f9';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 24, 36, -tempo * 0.02, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.shadowColor = '#fbbf24';
+                    ctx.shadowBlur = 10;
+                    ctx.font = 'bold 16px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('✦', 0, 6);
+                    ctx.textAlign = 'left';
+                    ctx.shadowBlur = 0;
+
+                    ctx.restore();
+                }
+            }
+
+            // Inimigos
+            for (const inim of inimigos) desenharInimigo(inim);
+
+            // Projéteis mágicos dos magos
+            for (const tiro of magiaTiros) {
+                const tx = tiro.x - cameraX;
+                ctx.shadowColor = '#ef4444';
+                ctx.shadowBlur = 14;
+                const tg = ctx.createRadialGradient(tx, tiro.y, 1, tx, tiro.y, tiro.r + 2);
+                tg.addColorStop(0, '#fef08a');
+                tg.addColorStop(0.4, '#f87171');
+                tg.addColorStop(1, '#991b1b');
+                ctx.fillStyle = tg;
+                ctx.beginPath();
+                ctx.arc(tx, tiro.y, tiro.r, 0, Math.PI * 2);
+                ctx.fill();
+                // núcleo
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(tx - 1, tiro.y - 1, 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            // Partículas
+            for (const p of particulas) {
+                ctx.globalAlpha = Math.max(0, p.vida / 40);
+                ctx.fillStyle = p.cor;
+                ctx.shadowColor = p.cor;
+                ctx.shadowBlur = 6;
+                ctx.beginPath();
+                ctx.arc(p.x - cameraX, p.y, p.r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1;
+
+            // Mago
+            desenharMago();
+
+            // Nome da fase estilo retro neon
+            ctx.fillStyle = 'rgba(0,0,0,0.55)';
+            ctx.fillRect(W / 2 - 100, 6, 200, 26);
+            ctx.strokeStyle = '#a855f7';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(W / 2 - 100, 6, 200, 26);
+            ctx.fillStyle = '#f0abfc';
+            ctx.shadowColor = '#e879f9';
+            ctx.shadowBlur = 14;
+            ctx.font = 'bold 13px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('◆ ' + fases[faseAtual].nome + ' ◆', W / 2, 23);
+            ctx.shadowBlur = 0;
+            ctx.textAlign = 'left';
+        }
+
+        function loop() {
+            atualizar();
+            desenhar();
+            if (jogoAtivo && !pausado) requestAnimationFrame(loop);
+        }
+
+        ctx.fillStyle = '#07050f';
+        ctx.fillRect(0, 0, W, H);
+    </script>
+</body>
+
+</html>
